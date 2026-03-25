@@ -34,3 +34,27 @@ yarn-error.log*
 # Supabase local state
 supabase/.branches/
 supabase/.temp/
+
+# Scripts con credenciales — nunca commitear
+create-test-user.js
+
+# MCP config (puede contener API keys)
+.mcp.json
+
+# AI tool config directories
+.agent/
+.agents/
+.augment/
+.claude/
+.codebuddy/
+.commandcode/
+.continue/
+.cortex/
+.crush/
+.factory/
+.goose/
+.junie/
+
+# Claude Code skills (locales al entorno)
+skills/
+skills-lock.json
