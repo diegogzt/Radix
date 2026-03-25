@@ -1,11 +1,13 @@
 ###############################################################################
 # RADIX Application Stack — Local / VPS Deployment
 #
-# Requires: .env file at project root (copy .env.example from each service)
+# Uso:
+#   1. cp .env.example .env  (rellenar con valores reales)
+#   2. docker compose up -d --build
 #
-# Before building frontend, set:
-#   PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY
-# These are baked into the client bundle at build time.
+# Para cambiar de IP a dominio (o entre dominios) solo hay que:
+#   - Editar .env con los nuevos valores
+#   - docker compose up -d --build   (rebuild necesario para PUBLIC_* del frontend)
 ###############################################################################
 
 services:
@@ -15,11 +17,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
+        # ⚠️  Estos valores se hornean en el bundle — rebuild requerido al cambiarlos
         PUBLIC_SUPABASE_URL: ${PUBLIC_SUPABASE_URL}
         PUBLIC_SUPABASE_ANON_KEY: ${PUBLIC_SUPABASE_ANON_KEY}
+        PUBLIC_API_URL: ${PUBLIC_API_URL}
     restart: unless-stopped
     ports:
-      - "4321:4321"
+      - "${FRONTEND_PORT:-4321}:4321"
     environment:
       HOST: 0.0.0.0
       PORT: 4321
@@ -32,8 +36,11 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8001}:8000"
     environment:
-      SUPABASE_URL: ${SUPABASE_URL:-http://supabase-kong:8000}
+      # URL de Supabase/Kong — cambiar sin rebuild
+      SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4321}
+      # CORS: orígenes separados por comas
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      FRONTEND_URL: ${FRONTEND_URL}
