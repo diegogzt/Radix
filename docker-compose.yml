@@ -1,0 +1,39 @@
+###############################################################################
+# RADIX Application Stack — Local / VPS Deployment
+#
+# Requires: .env file at project root (copy .env.example from each service)
+#
+# Before building frontend, set:
+#   PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY
+# These are baked into the client bundle at build time.
+###############################################################################
+
+services:
+  frontend:
+    container_name: radix-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        PUBLIC_SUPABASE_URL: ${PUBLIC_SUPABASE_URL}
+        PUBLIC_SUPABASE_ANON_KEY: ${PUBLIC_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    ports:
+      - "4321:4321"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4321
+      NODE_ENV: production
+
+  backend:
+    container_name: radix-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL:-http://supabase-kong:8000}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4321}
