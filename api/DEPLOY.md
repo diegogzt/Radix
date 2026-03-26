@@ -5,20 +5,18 @@ The Dockerfile is ready at `api/Dockerfile`
 
 ## Environment Variables (set in Dokploy dashboard)
 ```
-DATABASE_URL=jdbc:mysql://10.0.3.5:3306/radix?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-DATABASE_DRIVER=com.mysql.cj.jdbc.Driver
-DB_HOST=10.0.3.5
+DB_HOST=base-de-datos-radix-6awzza
 DB_PORT=3306
-DB_NAME=radix
+DB_NAME=radixDB
 DB_USER=root
-DB_PASSWORD=radix2024
+DB_PASSWORD=Diegoelmejor1.0
 SERVER_PORT=8080
 ```
 
 ## MySQL Database Setup
 Before deploying, ensure MySQL database exists:
 ```sql
-CREATE DATABASE radix CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE radixDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ## Build
