@@ -1,23 +1,14 @@
 ---
 import MainLayout from '@layouts/MainLayout.astro';
 import TreatmentForm from '@components/treatments/TreatmentForm';
-import { getServerClient } from '@lib/supabase';
-import {
-  getPatients,
-  getRadioisotopes,
-  getUnitCatalog,
-  getAvailableWatches,
-  getFacultatiu,
-} from '@lib/queries';
-
-const supabase = getServerClient(Astro);
+import { getPatients, getRadioisotopes, getUnitCatalog, getAvailableWatches, getFacultatiu } from '@lib/queries';
 
 const [patients, radioisotopes, units, watches, doctors] = await Promise.all([
-  getPatients(supabase),
-  getRadioisotopes(supabase),
-  getUnitCatalog(supabase),
-  getAvailableWatches(supabase),
-  getFacultatiu(supabase),
+  getPatients(),
+  getRadioisotopes(),
+  getUnitCatalog(),
+  getAvailableWatches(),
+  getFacultatiu(),
 ]);
 ---
 

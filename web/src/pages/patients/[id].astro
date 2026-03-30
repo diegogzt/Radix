@@ -1,13 +1,11 @@
 ---
 import MainLayout from '@layouts/MainLayout.astro';
 import PatientForm from '@components/patients/PatientForm';
-import { getServerClient } from '@lib/supabase';
 import { getPatientById } from '@lib/queries';
 
 const { id } = Astro.params;
-const supabase = getServerClient(Astro);
 
-const patient = await getPatientById(supabase, Number(id));
+const patient = await getPatientById(Number(id));
 
 if (!patient) {
   return Astro.redirect('/patients');

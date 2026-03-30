@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { getSupabaseBrowserClient } from '@lib/supabase';
-import type { Patient } from '@lib/types';
+import { createPatient, updatePatient } from '@lib/queries';
+import type { Patient } from '@lib/api';
 
 interface Props {
   patient?: Patient;
@@ -32,38 +32,22 @@ export default function PatientForm({ patient }: Props) {
     }
 
     try {
-      const supabase = getSupabaseBrowserClient();
-
       if (isEditing) {
-        const { error: updateError } = await supabase
-          .from('Patient')
-          .update({
-            name: form.name,
-            phone: form.phone || null,
-            address: form.address || null,
-          })
-          .eq('id', patient.id);
-
-        if (updateError) {
-          setError(updateError.message);
-          return;
-        }
-      } else {
-        const { error: insertError } = await supabase.from('Patient').insert({
+        await updatePatient(patient.id, {
           name: form.name,
           phone: form.phone || null,
           address: form.address || null,
         });
-
-        if (insertError) {
-          setError(insertError.message);
-          return;
-        }
+      } else {
+        await createPatient({
+          name: form.name,
+          phone: form.phone || null,
+          address: form.address || null,
+        });
       }
-
       window.location.href = '/patients';
-    } catch {
-      setError('Error al guardar paciente.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar paciente.');
     } finally {
       setLoading(false);
     }

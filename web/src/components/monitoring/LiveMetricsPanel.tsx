@@ -11,8 +11,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { getSupabaseBrowserClient } from '@lib/supabase';
-import { subscribeToHealthMetrics } from '@lib/realtime';
+import { getHealthMetrics } from '@lib/queries';
 import { calculateCurrentRadiation, bpmColor } from '@lib/utils';
 import type { HealthMetrics, TreatmentWithDetails } from '@lib/types';
 
@@ -24,7 +23,6 @@ interface Props {
 
 export default function LiveMetricsPanel({ treatmentId, initialMetrics, treatment }: Props) {
   const [metrics, setMetrics] = useState<HealthMetrics[]>(initialMetrics);
-  const supabase = getSupabaseBrowserClient();
 
   const latest = metrics[0] ?? null;
   const halfLife = treatment.Radioisotope?.half_life ?? 0;
@@ -34,14 +32,17 @@ export default function LiveMetricsPanel({ treatmentId, initialMetrics, treatmen
     ? calculateCurrentRadiation(initialRad, halfLife, treatment.start_date)
     : 0;
 
+  // Poll for new metrics every 10 seconds
   useEffect(() => {
-    const channel = subscribeToHealthMetrics(supabase, treatmentId, (newMetric) => {
-      setMetrics((prev) => [newMetric, ...prev].slice(0, 200));
-    });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await getHealthMetrics(treatmentId, 200);
+        setMetrics(fresh);
+      } catch {
+        // silently ignore polling errors
+      }
+    }, 10000);
+    return () => clearInterval(interval);
   }, [treatmentId]);
 
   // Prepare chart data (ascending order for charts)

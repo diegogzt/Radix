@@ -1,15 +1,12 @@
 ---
 import MainLayout from '@layouts/MainLayout.astro';
-import { getServerClient } from '@lib/supabase';
 import { getActiveTreatments } from '@lib/queries';
-
-const supabase = getServerClient(Astro);
 
 let treatments = [];
 let errorMsg = '';
 
 try {
-  treatments = await getActiveTreatments(supabase);
+  treatments = await getActiveTreatments();
 } catch (err) {
   errorMsg = err instanceof Error ? err.message : 'Error al cargar tratamientos';
 }

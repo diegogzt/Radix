@@ -1,51 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
-import { getSupabaseBrowserClient } from '@lib/supabase';
-import { subscribeToAlerts, subscribeToAlertUpdates } from '@lib/realtime';
+import { getUnresolvedAlerts, resolveAlert } from '@lib/queries';
 import { formatDateTime } from '@lib/utils';
-import type { AlertaMetge, AlertWithTreatment } from '@lib/types';
+import type { AlertWithTreatment } from '@lib/types';
 
 export default function AlertBell() {
   const [alerts, setAlerts] = useState<AlertWithTreatment[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isFlashing, setIsFlashing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const supabase = getSupabaseBrowserClient();
+  const prevCountRef = useRef(0);
 
   const unresolvedCount = alerts.filter((a) => !a.resolta).length;
 
+  // Poll for new alerts every 15 seconds
   useEffect(() => {
     async function fetchAlerts() {
-      const { data } = await supabase
-        .from('Alerta_Metge')
-        .select('*, Treatment(id, Patient(name))')
-        .eq('resolta', false)
-        .order('creada_el', { ascending: false })
-        .limit(20);
-
-      if (data) setAlerts(data as unknown as AlertWithTreatment[]);
+      try {
+        const data = await getUnresolvedAlerts();
+        setAlerts(data);
+        if (data.length > prevCountRef.current) {
+          setIsFlashing(true);
+          setTimeout(() => setIsFlashing(false), 5000);
+        }
+        prevCountRef.current = data.length;
+      } catch {
+        // silently ignore polling errors
+      }
     }
 
     fetchAlerts();
-
-    const alertChannel = subscribeToAlerts(supabase, (newAlert: AlertaMetge) => {
-      const alertWithTreatment = { ...newAlert, Treatment: null } as unknown as AlertWithTreatment;
-      setAlerts((prev) => [alertWithTreatment, ...prev]);
-      if (!newAlert.resolta) {
-        setIsFlashing(true);
-        setTimeout(() => setIsFlashing(false), 5000);
-      }
-    });
-
-    const updateChannel = subscribeToAlertUpdates(supabase, (updated: AlertaMetge) => {
-      setAlerts((prev) =>
-        prev.map((a) => (a.id === updated.id ? { ...a, resolta: updated.resolta } : a)),
-      );
-    });
-
-    return () => {
-      supabase.removeChannel(alertChannel);
-      supabase.removeChannel(updateChannel);
-    };
+    const interval = setInterval(fetchAlerts, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   // Close dropdown on outside click
@@ -60,8 +45,12 @@ export default function AlertBell() {
   }, []);
 
   async function handleResolve(alertId: number) {
-    await supabase.from('Alerta_Metge').update({ resolta: true }).eq('id', alertId);
-    setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, resolta: true } : a)));
+    try {
+      await resolveAlert(alertId);
+      setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, resolta: true } : a)));
+    } catch {
+      // silently ignore
+    }
   }
 
   return (

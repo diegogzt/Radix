@@ -1,11 +1,9 @@
 ---
 import MainLayout from '@layouts/MainLayout.astro';
 import PatientTable from '@components/patients/PatientTable';
-import { getServerClient } from '@lib/supabase';
 import { getPatients } from '@lib/queries';
 
-const supabase = getServerClient(Astro);
-const patients = await getPatients(supabase);
+const patients = await getPatients();
 ---
 
 <MainLayout title="Gestion de Pacientes" subtitle="Administrar registros de pacientes">

@@ -1,41 +1,43 @@
 import type { APIRoute } from 'astro';
-import { createServerClient, parseCookieHeader } from '@supabase/ssr';
+
+const API_BASE = import.meta.env.PUBLIC_API_URL ?? '';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const supabase = createServerClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return parseCookieHeader(request.headers.get('cookie') ?? '');
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookies.set(name, value, options as { path: string; httpOnly: boolean; sameSite: 'lax' | 'none' | 'strict'; secure: boolean; maxAge?: number });
-          });
-        },
-      },
-    }
-  );
-
   const formData = await request.formData();
   const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+  if (!email) {
+    return new Response(JSON.stringify({ error: 'Email requerido' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
   });
 
-  if (error || !data.user) {
-    return new Response(JSON.stringify({ error: error?.message || 'Login failed' }), {
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    return new Response(JSON.stringify({ error: data.error ?? 'Login fallido' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  return new Response(JSON.stringify({ success: true }), {
+  // Store email in a cookie as the session identifier
+  cookies.set('radix-user', encodeURIComponent(email), {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 8, // 8 hours
+    secure: import.meta.env.PROD,
+  });
+
+  return new Response(JSON.stringify({ success: true, nom: data.nom }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });

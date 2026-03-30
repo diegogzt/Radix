@@ -1,10 +1,7 @@
 ---
 import MainLayout from '@layouts/MainLayout.astro';
 import TreatmentCard from '@components/dashboard/TreatmentCard.astro';
-import { getServerClient } from '@lib/supabase';
 import { getActiveTreatments, getUnresolvedAlerts, getPatients } from '@lib/queries';
-
-const supabase = getServerClient(Astro);
 
 let treatments = [];
 let alertCount = 0;
@@ -12,10 +9,10 @@ let patientCount = 0;
 let errorMsg = '';
 
 try {
-  treatments = await getActiveTreatments(supabase);
-  const alerts = await getUnresolvedAlerts(supabase);
+  treatments = await getActiveTreatments();
+  const alerts = await getUnresolvedAlerts();
   alertCount = alerts.length;
-  const patients = await getPatients(supabase);
+  const patients = await getPatients();
   patientCount = patients.length;
 } catch (err) {
   errorMsg = err instanceof Error ? err.message : 'Error al cargar datos';

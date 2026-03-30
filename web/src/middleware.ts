@@ -1,37 +1,25 @@
 import { defineMiddleware } from 'astro:middleware';
-import { createServerSupabaseClient } from '@lib/supabase';
 
-const PUBLIC_ROUTES = ['/login', '/api/auth/callback', '/api/auth/login'];
+const PUBLIC_ROUTES = ['/login', '/api/auth/login', '/api/auth/callback'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
-    return next();
-  }
+  if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) return next();
+  if (pathname.startsWith('/_astro') || pathname.startsWith('/favicon')) return next();
 
-  // Allow static assets
-  if (pathname.startsWith('/_astro') || pathname.startsWith('/favicon')) {
-    return next();
-  }
+  const cookie = context.request.headers.get('cookie') ?? '';
+  const hasSession = cookie.includes('radix-user=');
 
-  const supabase = createServerSupabaseClient(
-    context.request.headers.get('cookie'),
-    (name, value, options) => {
-      context.cookies.set(name, value, options as Record<string, unknown>);
-    },
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!hasSession) {
     return context.redirect('/login');
   }
 
-  // Attach user and supabase client to locals
-  context.locals.user = user;
-  context.locals.supabase = supabase;
+  // Expose user email to pages via locals
+  const match = cookie.match(/radix-user=([^;]+)/);
+  if (match) {
+    context.locals.userEmail = decodeURIComponent(match[1]);
+  }
 
   return next();
 });

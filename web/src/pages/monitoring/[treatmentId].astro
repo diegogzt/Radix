@@ -1,19 +1,17 @@
 ---
 import MainLayout from '@layouts/MainLayout.astro';
 import LiveMetricsPanel from '@components/monitoring/LiveMetricsPanel';
-import { getServerClient } from '@lib/supabase';
 import { getTreatmentById, getHealthMetrics } from '@lib/queries';
 
 const { treatmentId } = Astro.params;
-const supabase = getServerClient(Astro);
 
-const treatment = await getTreatmentById(supabase, Number(treatmentId));
+const treatment = await getTreatmentById(Number(treatmentId));
 
 if (!treatment) {
   return Astro.redirect('/dashboard');
 }
 
-const metrics = await getHealthMetrics(supabase, treatment.id, 100);
+const metrics = await getHealthMetrics(treatment.id, 100);
 const patientName = treatment.Patient?.name ?? 'Paciente';
 ---
 

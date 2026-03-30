@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { getSupabaseBrowserClient } from '@lib/supabase';
+import { deletePatient } from '@lib/queries';
 import { formatDate } from '@lib/utils';
-import type { Patient } from '@lib/types';
+import type { Patient } from '@lib/api';
 
 interface Props {
   patients: Patient[];
@@ -13,8 +13,6 @@ export default function PatientTable({ patients: initialPatients }: Props) {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
-  const supabase = getSupabaseBrowserClient();
-
   const filtered = patients.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -24,9 +22,11 @@ export default function PatientTable({ patients: initialPatients }: Props) {
 
   async function handleDelete(id: number) {
     setDeleting(id);
-    const { error } = await supabase.from('Patient').delete().eq('id', id);
-    if (!error) {
+    try {
+      await deletePatient(id);
       setPatients((prev) => prev.filter((p) => p.id !== id));
+    } catch {
+      // keep list unchanged on error
     }
     setDeleting(null);
     setConfirmId(null);
@@ -79,7 +79,9 @@ export default function PatientTable({ patients: initialPatients }: Props) {
                     <td className="max-w-xs truncate px-4 py-3 text-gray-600">
                       {patient.address ?? '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(patient.created_at)}</td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {patient.created_at ? formatDate(patient.created_at) : '-'}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <a
