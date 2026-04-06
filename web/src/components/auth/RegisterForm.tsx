@@ -1,37 +1,45 @@
 import { useState, type FormEvent } from 'react';
 
-export default function LoginForm() {
+export default function RegisterForm() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       const formData = new FormData();
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
       formData.append('email', email);
       formData.append('password', password);
 
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         body: formData,
-        credentials: 'include',
       });
 
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        setError(result.error || 'Error al iniciar sesion');
+        setError(result.error || 'Error al registrar usuario');
         return;
       }
 
-      window.location.href = '/dashboard';
+      setSuccess('Usuario creado con éxito. Redirigiendo al login...');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
     } catch {
-      setError('Error de conexion. Intente de nuevo.');
+      setError('Error de conexión. Intente de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -42,24 +50,9 @@ export default function LoginForm() {
       {/* Decorative top accent */}
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-radix-400 via-radix-500 to-radix-600"></div>
 
-      {/* Mobile Branding (only visible on small screens where side panel is hidden) */}
-      <div className="mb-8 text-center lg:hidden">
-        <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-radix-100/50 p-2 shadow-sm ring-1 ring-radix-200">
-          <svg className="h-6 w-6 text-radix-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="3" />
-            <line x1="12" y1="2" x2="12" y2="6" />
-            <line x1="12" y1="18" x2="12" y2="22" />
-            <line x1="2" y1="12" x2="6" y2="12" />
-            <line x1="18" y1="12" x2="22" y2="12" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">RADIX</h2>
-      </div>
-
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Bienvenido de nuevo</h2>
-        <p className="mt-2 text-sm text-gray-500">Por favor ingresa tus credenciales de acceso</p>
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Crear cuenta</h2>
+        <p className="mt-2 text-sm text-gray-500">Únete a la plataforma de radiofarmacia segura</p>
       </div>
 
       {error && (
@@ -69,7 +62,45 @@ export default function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      {success && (
+        <div className="animate-fade-in mb-6 flex items-start gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700 backdrop-blur-sm">
+          <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <p>{success}</p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 text-left">
+            <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+              Nombre
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              required
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Gregory"
+              className="input"
+            />
+          </div>
+          <div className="space-y-1.5 text-left">
+            <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+              Apellidos
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              required
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="House"
+              className="input"
+            />
+          </div>
+        </div>
+
         <div className="space-y-1.5 text-left">
           <label htmlFor="email" className="text-sm font-medium text-gray-700">
             Correo electrónico
@@ -113,23 +144,24 @@ export default function LoginForm() {
         <div className="pt-2">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || success !== ''}
             className="btn-primary w-full py-3"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                Iniciando sesión...
+                Creando cuenta...
               </span>
             ) : (
-              'Iniciar Sesión'
+              'Registrarse ahora'
             )}
           </button>
         </div>
+
         <div className="mt-4 text-center text-sm">
-          <span className="text-gray-500">¿No tienes cuenta? </span>
-          <a href="/register" className="font-semibold text-radix-600 hover:text-radix-500 hover:underline">
-            Regístrate aquí
+          <span className="text-gray-500">¿Ya tienes cuenta? </span>
+          <a href="/login" className="font-semibold text-radix-600 hover:text-radix-500 hover:underline">
+            Inicia sesión
           </a>
         </div>
       </form>

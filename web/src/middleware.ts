@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 
-const PUBLIC_ROUTES = ['/login', '/api/auth/login', '/api/auth/callback'];
+const PUBLIC_ROUTES = ['/login', '/register', '/api/auth/login', '/api/auth/register', '/api/auth/callback'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
